@@ -1,1 +1,205 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gracias</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  background: radial-gradient(circle at 20% 30%, #2b1055, #0f0c29 40%, #000428 70%);
+}
+
+h1{
+  position:fixed;
+  width:100%;
+  text-align:center;
+  top:25%;
+  transform:translateY(-50%);
+  color:#fff;
+  font-family:'Permanent Marker', cursive;
+  z-index:10;
+  font-size:clamp(1.8rem, 6vw, 3.5rem);
+}
+
+#name{
+  position:fixed;
+  width:100%;
+  text-align:center;
+  top:55%;
+  color:#ff66cc;
+  font-family:'Permanent Marker', cursive;
+  font-size:clamp(1.5rem,5vw,2.5rem);
+  opacity:0;
+  transform:scale(0.5);
+  transition:all .6s ease;
+  z-index:20;
+}
+
+#name.show{
+  opacity:1;
+  transform:scale(1);
+}
+
+canvas{display:block;}
+</style>
+</head>
+<body>
+
+<h1>Gracias por tu amistad</h1>
+<div id="name">Dianisflow</div>
+
+<!-- 🎵 AUDIO LOCAL (GitHub compatible) -->
+<audio id="music" preload="auto" playsinline>
+  <source src="./Forg_tful.mp3" type="audio/mpeg">
+</audio>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from "three";
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 500);
+camera.position.z = 40;
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.9));
+const light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(10,15,10);
+scene.add(light);
+
+function random(min,max){ return min+Math.random()*(max-min); }
+
+/* 🌌 Estrellas */
+const starGeo = new THREE.BufferGeometry();
+const starCount = 1500;
+const positions = new Float32Array(starCount * 3);
+
+for(let i=0;i<starCount;i++){
+  positions[i*3]=random(-200,200);
+  positions[i*3+1]=random(-200,200);
+  positions[i*3+2]=random(-200,200);
+}
+
+starGeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:1}));
+scene.add(stars);
+
+/* 🎁 REGALO ADELANTE */
+const gift=new THREE.Group();
+
+const box=new THREE.Mesh(
+  new THREE.BoxGeometry(8,8,8),
+  new THREE.MeshStandardMaterial({color:0xff3366})
+);
+gift.add(box);
+
+const ribbon1=new THREE.Mesh(
+  new THREE.BoxGeometry(1,8.2,8.2),
+  new THREE.MeshStandardMaterial({color:0xffffff})
+);
+gift.add(ribbon1);
+
+const ribbon2=new THREE.Mesh(
+  new THREE.BoxGeometry(8.2,1,8.2),
+  new THREE.MeshStandardMaterial({color:0xffffff})
+);
+gift.add(ribbon2);
+
+gift.position.set(0,-15,10);
+scene.add(gift);
+
+/* 🌸 Flores */
+const flowers=[];
+function createFlower(){
+  const f=new THREE.Mesh(
+    new THREE.SphereGeometry(1.5,12,12),
+    new THREE.MeshStandardMaterial({
+      color:new THREE.Color().setHSL(Math.random(),0.8,0.6)
+    })
+  );
+  f.position.set(random(-30,30),random(20,80),random(-30,30));
+  f.userData={speed:random(0.1,0.3)};
+  return f;
+}
+
+setInterval(()=>{
+  const f=createFlower();
+  scene.add(f);
+  flowers.push(f);
+  if(flowers.length>100){
+    scene.remove(flowers.shift());
+  }
+},400);
+
+/* 🎯 CLICK REAL SOBRE REGALO */
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+const audio=document.getElementById("music");
+let opened=false;
+
+window.addEventListener("click",(event)=>{
+  mouse.x=(event.clientX/innerWidth)*2-1;
+  mouse.y=-(event.clientY/innerHeight)*2+1;
+
+  raycaster.setFromCamera(mouse,camera);
+  const intersects=raycaster.intersectObject(box);
+
+  if(intersects.length>0 && !opened){
+    opened=true;
+
+    // Mostrar nombre
+    document.getElementById("name").classList.add("show");
+
+    // Reproducir música
+    audio.currentTime=0;
+    audio.play().catch(err=>console.log(err));
+
+    // Pequeña animación apertura
+    box.rotation.x=0.6;
+  }
+});
+
+function animate(){
+  requestAnimationFrame(animate);
+
+  stars.rotation.y+=0.0005;
+
+  flowers.forEach(f=>{
+    f.position.y-=f.userData.speed;
+    if(f.position.y<-50){
+      f.position.y=random(40,80);
+    }
+  });
+
+  gift.rotation.y+=0.01;
+
+  renderer.render(scene,camera);
+}
+
+animate();
+
+addEventListener("resize",()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+
+</body>
+</html>
